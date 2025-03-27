@@ -50,11 +50,20 @@ def Greedy_path(points):
 
     return sort_points,track_dist         # indecies, in order of the array.
 
+def plot_path(points):
+    plt.figure()
+    plt.scatter(points[1:-1,0],points[1:-1,1])  # plot intermediary points
+    plt.plot(points[:,0],points[:,1],'r')       # connect points with path
+    plt.scatter(points[0,0],points[0,1], 120, color ='g', marker="*", label="start\end") # show first/last point
+    plt.legend(loc='best')
+    plt.show()
+
 def main():
     lower_bound = -10
     upper_bound = 10
     n = 150
     points = np.random.uniform(lower_bound, upper_bound, [n-1,2])       # n-1 because I start and end at [0,0] no matter what
+    show_plots = True
 
     sorted_points,dist = Greedy_path(points)
 
@@ -62,10 +71,7 @@ def main():
     print("Sorted Points:\n",sorted_points)
     print(f"Total distance = {dist}")
 
-    plt.figure()
-    plt.scatter(points[1:-1,0],points[1:-1,1])
-    plt.plot(sorted_points[:,0],sorted_points[:,1],'r')
-    plt.scatter(sorted_points[0,0],sorted_points[0,1], 120, color ='g', marker="*", label="start\end")            # show first point
-    plt.legend(loc='best')
-    plt.show()
+    if(show_plots):
+        plot_path(sorted_points)
+
 
