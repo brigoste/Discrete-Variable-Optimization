@@ -95,34 +95,8 @@ def plot_steps(points):
     plt.pause(0.005)
     plt.cla()
 
-
-lower_bound = -10
-upper_bound = 10
-n = 30
-plot_each_step = True
-points = np.random.uniform(lower_bound, upper_bound, [n-1,2])       # n-1 because I start and end at [0,0] no matter wha
-
-# Start with the greedy algorithm to get an initial dataset
-points_greedy,dist = Greedy_path(points.copy())
-
-print(points_greedy)
-
-max_iter = 25000
-T0 = 1000
-T = T0
-Beta = 4 # on the range (1-4), higher number means we keep the temperature lower longer.
-
-# original path
-hold_points_greedy = points_greedy.copy()
-f_store = np.array([measure_path(hold_points_greedy)])
-
-points = points_greedy.copy()
-global count_swaps
-
-count_swaps = 0
-
 # ----------------------Start the annealing loop------------------------------
-def Simulated_annealing(points,f_store,T0,plot_each_step=True):
+def Simulated_annealing(points,f_store,T0,Beta,show_plots=True,max_iter=25000):
     global count_swaps
     T = T0
     for i in range(max_iter):
@@ -149,43 +123,83 @@ def Simulated_annealing(points,f_store,T0,plot_each_step=True):
         f_store = np.hstack([f_store,measure_path(points)])
         T = T0*(1-(i/max_iter))**Beta
 
-        if(plot_each_step and i%50 == 0):
+        if(show_plots and i%50 == 0):
             plot_steps(points)
 
-    return points,f_store
+    return points,f_store,max_iter
 
-points,f_store = Simulated_annealing(points,f_store,T0,plot_each_step)
+def plot_path(points,sim_plot_points,points_greedy,max_iter,f_store):
+    plt.figure()
+    plt.scatter(points[:,0],points[:,1])
+    plt.plot(sim_plot_points[:,0],sim_plot_points[:,1],'r')
+    plt.scatter(points[0,0],points[0,1], 120, color ='g', marker="*", label="start\end")            # show first point
+    plt.legend(loc='best')
+    plt.title('Simulated Annealing')
 
-if(f_store[-1] > f_store[0]):
-    points,f_store = Simulated_annealing(points,f_store,T0,plot_each_step)
+    plt.figure()
+    plt.scatter(points_greedy[1:-1,0],points_greedy[1:-1,1])
+    plt.plot(points_greedy[:,0],points_greedy[:,1],'r')
+    plt.scatter(points_greedy[0,0],points_greedy[0,1], 120, color ='g', marker="*", label="start\end")            # show first point
+    plt.legend(loc='best')
+    plt.title("Greedy Algorithm")
 
-plt.ioff()
-plt.close()
-print(f"Iteration {max_iter}")
-dist_f = measure_path(points)
+    plt.figure()
+    plt.semilogy(np.linspace(0,1,max_iter+1),f_store)
+    plt.xlabel('Iteration')
+    plt.ylabel('f')
 
-sim_plot_points = np.vstack([points,points[0,:]])
+    plt.show()
 
-print(f"\nGreedy distance = {f_store[0]}\nSimulated Annealing = {f_store[-1]}")
-print(f"Swaps = {count_swaps}")
-print(f"Final T = {T}")
-plt.figure()
-plt.scatter(points[:,0],points[:,1])
-plt.plot(sim_plot_points[:,0],sim_plot_points[:,1],'r')
-plt.scatter(points[0,0],points[0,1], 120, color ='g', marker="*", label="start\end")            # show first point
-plt.legend(loc='best')
-plt.title('Simulated Annealing')
+def main():
+    show_plots = True
+    lower_bound = -10
+    upper_bound = 10
+    n = 30
+    points = np.random.uniform(lower_bound, upper_bound, [n-1,2])       # n-1 because I start and end at [0,0] no matter wha
 
-plt.figure()
-plt.scatter(points_greedy[1:-1,0],points_greedy[1:-1,1])
-plt.plot(points_greedy[:,0],points_greedy[:,1],'r')
-plt.scatter(points_greedy[0,0],points_greedy[0,1], 120, color ='g', marker="*", label="start\end")            # show first point
-plt.legend(loc='best')
-plt.title("Greedy Algorithm")
+    # Start with the greedy algorithm to get an initial dataset
+    points_greedy,dist = Greedy_path(points.copy())
 
-plt.figure()
-plt.semilogy(np.linspace(0,1,(2*max_iter)+1),f_store)
-plt.xlabel('Iteration')
-plt.ylabel('f')
+    print(points_greedy)
 
-plt.show()
+    max_iter = 25000
+    T0 = 1000
+    T = T0
+    Beta = 4 # on the range (1-4), higher number means we keep the temperature lower longer.
+
+    # original path
+    hold_points_greedy = points_greedy.copy()
+    f_store = np.array([measure_path(hold_points_greedy)])
+
+    points = points_greedy.copy()
+    global count_swaps
+
+    count_swaps = 0
+    total_iterations = 0
+    total_iterations2 = 0
+
+    points,f_store,total_iterations = Simulated_annealing(points,f_store,T0,Beta,show_plots,max_iter)
+
+    # what if this yields a path worse than the greedy algorithm? 
+    # Restart seeding the first iteration with the last iteration of the previous run of simulated_annealing.    
+    if(f_store[-1] > f_store[0]):   
+        points,f_store,total_iterations2 = Simulated_annealing(points,f_store,T0,Beta,show_plots,max_iter)
+
+    iterations = total_iterations+total_iterations2
+
+    plt.ioff()
+    plt.close()
+    print(f"Iteration {iterations}")
+    dist_f = measure_path(points)
+
+    sim_plot_points = np.vstack([points,points[0,:]])
+
+    print(f"\nGreedy distance = {f_store[0]}\nSimulated Annealing = {f_store[-1]}")
+    print(f"Swaps = {count_swaps}")
+    print(f"Final T = {T}")
+
+    if(show_plots):
+        plot_path(points,sim_plot_points,points_greedy,iterations,f_store)
+
+global count_swaps
+main()
