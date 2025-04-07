@@ -100,8 +100,8 @@ def Simulated_annealing(points,f_store,T0,Beta,show_plots=True,max_iter=25000):
     global count_swaps
     T = T0
     for i in range(max_iter):
-        if(i%10 == 0):
-            print(f"Iteration {i}")
+        # if(i%1000 == 0):
+        #     print(f"Iteration {i}")
         
         # switch order between 2 random neighboring points
         points_new = neighbor_swap(points.copy())       # looks at a random set of points and puts them in a new location order
@@ -150,13 +150,24 @@ def plot_path(points,sim_plot_points,points_greedy,max_iter,f_store):
 
     plt.show()
 
+def plot_path2(points,sim_plot_points,iteration):
+    figure_title = f"ME 575  HW8\\Figures\\Simulated_Annealing_Iteration_{iteration}.jpg"
+    plt.figure()
+    plt.scatter(points[:,0],points[:,1])
+    plt.plot(sim_plot_points[:,0],sim_plot_points[:,1],'r')
+    plt.scatter(points[0,0],points[0,1], 120, color ='g', marker="*", label="start\end")            # show first point
+    plt.legend(loc='best')
+    plt.title('Simulated Annealing')
+    plt.savefig(figure_title, dpi=300, bbox_inches='tight')
+    # plt.show()
+
 def main():
     show_plots = True
     lower_bound = -10
     upper_bound = 10
     n = 30
     points = np.random.uniform(lower_bound, upper_bound, [n-1,2])       # n-1 because I start and end at [0,0] no matter wha
-
+    points_orig = points.copy()
     # Start with the greedy algorithm to get an initial dataset
     points_greedy,dist = Greedy_path(points.copy())
 
@@ -201,5 +212,35 @@ def main():
     if(show_plots):
         plot_path(points,sim_plot_points,points_greedy,iterations,f_store)
 
+def repeat_annealing():
+    show_plots = False
+    lower_bound = -10
+    upper_bound = 10
+    n = 49
+    points = np.random.uniform(lower_bound, upper_bound, [n-1,2])       # n-1 because I start and end at [0,0] no matter wha
+    points_orig = points.copy()
+    # Start with the greedy algorithm to get an initial dataset
+    points_greedy,dist = Greedy_path(points.copy())
+
+    max_iter = 25000
+    T0 = 1000
+    T = T0
+    Beta = 4 # on the range (1-4), higher number means we keep the temperature lower longer.
+    f_store = np.array([])
+    f_best = np.array([])
+
+    for i in range(100):
+        print(f"Iteration {i}")
+        global count_swaps
+        count_swaps = 0
+        points,f_store,total_iterations = Simulated_annealing(points_orig,f_store,T0,Beta,show_plots,max_iter)
+        f_best = np.hstack([f_best,f_store[-1]])
+        if(i%21 == 0):
+            sim_plot_points = np.vstack([points,points[0,:]])
+            plot_path2(points,sim_plot_points,i)
+
+    print(f"Best distances = {f_best}")
+
 global count_swaps
-main()
+# main()
+repeat_annealing()
